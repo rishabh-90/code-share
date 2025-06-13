@@ -6,7 +6,6 @@ import {
   DateRangePicker,
   LocalizationProvider,
   MultiInputDateRangeField,
-  DateRange,
 } from '@mui/x-date-pickers-pro';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -34,18 +33,21 @@ const DateRangeSelectorWithMultiInput: React.FC<DateRangePickerProps> = ({
   endDate,
   onChange,
   onClear,
-  minDate = moment().startOf('day'),
+  minDate,
   maxDate = moment().add(7, 'days').endOf('day'),
   title = 'Date Range',
 }) => {
-  const [value, setValue] = useState<[Moment | null, Moment | null]>([startDate ?? null, endDate ?? null]);
-  const [tempDate, setTempDate] = useState<[Moment | null, Moment | null]>([startDate ?? null, endDate ?? null]);
+  const initialValue: [Moment | null, Moment | null] = [startDate ?? null, endDate ?? null];
+
+  const [value, setValue] = useState(initialValue);
+  const [tempDate, setTempDate] = useState(initialValue);
   const [open, setOpen] = useState(false);
 
+  // Sync props to internal state if changed externally
   useEffect(() => {
-    const initial: [Moment | null, Moment | null] = [startDate ?? null, endDate ?? null];
-    setValue(initial);
-    setTempDate(initial);
+    const updated: [Moment | null, Moment | null] = [startDate ?? null, endDate ?? null];
+    setValue(updated);
+    setTempDate(updated);
   }, [startDate, endDate]);
 
   const handleAccept = (accepted: [Moment | null, Moment | null]) => {
@@ -56,7 +58,7 @@ const DateRangeSelectorWithMultiInput: React.FC<DateRangePickerProps> = ({
   };
 
   const handleClose = () => {
-    setTempDate(value); // Revert changes
+    setTempDate(value); // Revert
     setOpen(false);
   };
 
@@ -84,9 +86,9 @@ const DateRangeSelectorWithMultiInput: React.FC<DateRangePickerProps> = ({
             onClose={handleClose}
             onAccept={handleAccept}
             value={tempDate}
-            onChange={(newValue) => setTempDate(newValue)} // buffer only
+            onChange={(newValue) => setTempDate(newValue)}
             closeOnSelect={false}
-            minDate={minDate}
+            minDate={minDate ?? moment().subtract(10, 'years')}
             maxDate={maxDate}
             slots={{ field: MultiInputDateRangeField }}
             slotProps={{

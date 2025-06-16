@@ -1,35 +1,41 @@
-```ts
-const handleDateChange = (newValue: [Moment | null, Moment | null]) => {
-  setIsChangingDate(true);
-  const [start, end] = newValue;
+// Keep track of last committed value to detect start changes
+const prevValueRef = React.useRef<[Moment|null, Moment|null]>(value);
+React.useEffect(() => {
+  prevValueRef.current = value;
+}, [value]);
 
-  // 1) nothing picked → clear both
-  if (!start) {
-    setTempDate([null, null]);
+const handleAccept = ([rawStart, rawEnd]: [Moment|null, Moment|null]) => {
+  const [prevStart] = prevValueRef.current;
+
+  // 1) nothing selected → clear both
+  if (!rawStart) {
+    onChange([null, null]);
+    prevValueRef.current = [null, null];
     return;
   }
 
-  // 2) only start → default end = start + 2 days
-  if (start && !end) {
-    const defaultEnd = start.clone().add(2, 'days');
-    setTempDate([start, defaultEnd]);
+  // 2) only start selected → end = start + 2 days
+  if (rawStart && !rawEnd) {
+    const end = rawStart.clone().add(2, 'days');
+    onChange([rawStart, end]);
+    prevValueRef.current = [rawStart, end];
     return;
   }
 
-  // 3) both picked
-  if (start && end) {
-    const diffDays = end.diff(start, 'days');
-
-    // if reversed click (end ≤ start) OR span > 30 days
-    if (!end.isAfter(start) || diffDays > 30) {
-      // treat the click as a brand-new start: end = start + 2 days
-      const newStart = start;
-      const newEnd = newStart.clone().add(2, 'days');
-      setTempDate([newStart, newEnd]);
-    } else {
-      // a valid forward range within 30 days
-      setTempDate([start, end]);
+  // 3) both selected
+  const startChanged = !prevStart || !rawStart.isSame(prevStart, 'day');
+  if (startChanged) {
+    const span = rawEnd.diff(rawStart, 'days');
+    // if reversed or >30 days → reset end to start + 2
+    if (!rawEnd.isAfter(rawStart) || span > 30) {
+      const end = rawStart.clone().add(2, 'days');
+      onChange([rawStart, end]);
+      prevValueRef.current = [rawStart, end];
+      return;
     }
   }
+
+  // valid forward change of end-date only, or valid span ≤30
+  onChange([rawStart, rawEnd!]);
+  prevValueRef.current = [rawStart, rawEnd!];
 };
-```

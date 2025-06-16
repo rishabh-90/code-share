@@ -1,3 +1,4 @@
+```ts
 const handleDateChange = (newValue: [Moment | null, Moment | null]) => {
   setIsChangingDate(true);
   const [start, end] = newValue;
@@ -17,14 +18,18 @@ const handleDateChange = (newValue: [Moment | null, Moment | null]) => {
 
   // 3) both picked
   if (start && end) {
-    // if end is the same as or before start → treat that click as a new start
-    if (!end.isAfter(start)) {
-      const newStart = end;
+    const diffDays = end.diff(start, 'days');
+
+    // if reversed click (end ≤ start) OR span > 30 days
+    if (!end.isAfter(start) || diffDays > 30) {
+      // treat the click as a brand-new start: end = start + 2 days
+      const newStart = start;
       const newEnd = newStart.clone().add(2, 'days');
       setTempDate([newStart, newEnd]);
     } else {
-      // a valid forward range
+      // a valid forward range within 30 days
       setTempDate([start, end]);
     }
   }
 };
+```

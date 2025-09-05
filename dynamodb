@@ -1,0 +1,264 @@
+
+# DynamoDB Single‑Table Design for LPA / Side Letter Comparison
+
+This document illustrates how to store **Documents**, **Clauses**, **Vector Matches**, and **LLM Extracts** in **one DynamoDB table** using key-prefix patterns and GSIs.
+
+---
+
+## Table Overview
+
+**Table name:** `LegalDocs`  
+**Primary key:** (`pk` partition key, `sk` sort key)  
+**Indexes:**
+
+- **gsi1-by-term** — group clauses by normalized topic (e.g., `management_fee`, `mfn`)
+- **gsi2-by-investor** — fetch all Side Letter clauses for an investor
+- **gsi3-by-fund** — list documents/clauses by fund
+- **gsi4-reverse-lpa-map** — which Side Letter clauses matched a given LPA clause
+- **gsi5-mfn-review** — legal review queue (MFN & risk bucketing)
+
+> Keys **look different per entity** because we encode the entity type + hierarchy into the keys, which is the standard single-table pattern.
+
+---
+
+## Entities & Key Patterns
+
+### 1) Document Metadata (LPA or Side Letter)
+- **pk**: `DOC#<docId>`  
+- **sk**: `META`
+
+```json
+{
+  "pk": "DOC#LPA_FUND1_V1",
+  "sk": "META",
+  "entity": "DOC",
+  "source": "LPA",
+  "fundId": "FUND1",
+  "docId": "LPA_FUND1_V1",
+  "version": "1.0",
+  "effectiveDate": "2024-06-01",
+  "pages": 187,
+  "s3Uri": "s3://bucket/fund1/LPA_v1.pdf",
+  "checksum": "sha256:..."
+}
+```
+
+### 2) Clause (one per numbered section/paragraph)
+- **pk**: `DOC#<docId>`  
+- **sk**: `CLAUSE#<clauseId>`
+
+```json
+{
+  "pk": "DOC#LPA_FUND1_V1",
+  "sk": "CLAUSE#6.1(b)",
+  "entity": "CLAUSE",
+  "source": "LPA",
+  "fundId": "FUND1",
+  "docId": "LPA_FUND1_V1",
+  "sectionNumber": "6.1(b)",
+  "headingPath": "Fees > Management Fee",
+  "page": 54,
+  "normTerm": "management_fee",
+  "text": "During the Investment Period ...",
+  "osId": "os:lpa_fund1_v1:6.1(b)",
+  "vectorReady": true,
+
+  "gsi1pk": "TERM#management_fee",
+  "gsi1sk": "LPA#FUND1#DOC#LPA_FUND1_V1#CLAUSE#6.1(b)",
+
+  "gsi3pk": "FUND#FUND1",
+  "gsi3sk": "LPA#DOC#LPA_FUND1_V1#0001"
+}
+```
+
+> All clauses for a document share the same `pk`. Querying `pk=DOC#<docId>` (with `begins_with(sk, "CLAUSE#")`) returns the document in logical order.
+
+### 3) Retrieval Match (Top‑K vector hits: SL clause → LPA clause)
+- **pk**: `SL#<slDocId>#CLAUSE#<slClauseId>`  
+- **sk**: `MATCH#<rank>` (e.g., `MATCH#1`, `MATCH#2`, ...)
+
+```json
+{
+  "pk": "SL#SL_INV100_FUND1_V1#CLAUSE#3",
+  "sk": "MATCH#1",
+  "entity": "MATCH",
+  "lpaDocId": "LPA_FUND1_V1",
+  "lpaClauseId": "6.1(b)",
+  "score": 0.87,
+  "sectionNumber": "6.1(b)",
+  "normTerm": "management_fee",
+
+  "gsi4pk": "LPA#LPA_FUND1_V1#CLAUSE#6.1(b)",
+  "gsi4sk": "SL#SL_INV100_FUND1_V1#CLAUSE#3#SCORE#0.87"
+}
+```
+
+> You can fetch all matches for an SL clause by querying `pk=SL#...#CLAUSE#...`.  
+> The **reverse lookup** (which SL clauses matched LPA §6.1(b)?) is done via **GSI4**.
+
+### 4) Extract (LLM comparison result per SL clause/term)
+- **pk**: `COMPARE#<slDocId>`  
+- **sk**: `TERM#<normTerm>#CLAUSE#<slClauseId>`
+
+```json
+{
+  "pk": "COMPARE#SL_INV100_FUND1_V1",
+  "sk": "TERM#management_fee#CLAUSE#3",
+  "entity": "EXTRACT",
+  "fundId": "FUND1",
+  "investorId": "INV100",
+  "lpaDocId": "LPA_FUND1_V1",
+  "lpaClauseId": "6.1(b)",
+  "lpa_sectionNumber": "6.1(b)",
+  "lpa_summary": "2% during IP; 1.5% thereafter.",
+  "sl_sectionNumber": "3",
+  "sl_summary": "1.5% during IP; 1.0% thereafter for this investor.",
+  "modification_type": "Exception",
+  "mfn_eligible": true,
+  "conditions": "Commitment ≥ $100m",
+  "jurisdictional_limitations": "N/A",
+  "risk_flags": ["MFN impact"],
+  "confidence": 0.86,
+
+  "gsi5pk": "MFN#true",
+  "gsi5sk": "HIGH#70_85#FUND1#INV100#SL_INV100_FUND1_V1#management_fee"
+}
+```
+
+> Query `pk=COMPARE#<slDocId>` to render the full comparison matrix for a given Side Letter.
+
+---
+
+## Visual: How Items Sit Under Keys
+
+### A) Document partition (LPA example)
+```
+pk = DOC#LPA_FUND1_V1
+┌───────────────────────────────────────────────┐
+│ sk = META                                    │  ← document metadata
+├───────────────────────────────────────────────┤
+│ sk = CLAUSE#1                                 │
+│ sk = CLAUSE#1.1                               │
+│ sk = CLAUSE#6.1                               │
+│ sk = CLAUSE#6.1(a)                            │
+│ sk = CLAUSE#6.1(b)                            │  ← fee clause
+│ sk = CLAUSE#6.2                               │
+│ ...                                           │  ← all remaining clauses
+└───────────────────────────────────────────────┘
+```
+
+### B) Matches partition (per SL clause)
+```
+pk = SL#SL_INV100_FUND1_V1#CLAUSE#3
+┌───────────────────────────────────────────────┐
+│ sk = MATCH#1  (→ LPA §6.1(b), score 0.87)     │
+├───────────────────────────────────────────────┤
+│ sk = MATCH#2  (→ LPA §6.1(a), score 0.79)     │
+├───────────────────────────────────────────────┤
+│ sk = MATCH#3  (→ LPA §6.2,    score 0.71)     │
+└───────────────────────────────────────────────┘
+```
+
+### C) Extracts partition (per Side Letter)
+```
+pk = COMPARE#SL_INV100_FUND1_V1
+┌───────────────────────────────────────────────────────────────┐
+│ sk = TERM#management_fee#CLAUSE#3     (MFN#true, HIGH risk)    │
+├───────────────────────────────────────────────────────────────┤
+│ sk = TERM#reporting#CLAUSE#5          (MFN#false, MED risk)    │
+├───────────────────────────────────────────────────────────────┤
+│ sk = TERM#excuse_rights#CLAUSE#7      (MFN#true,  LOW risk)    │
+└───────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## GSIs: What They Do
+
+- **GSI1 (by term)**  
+  - `gsi1pk = TERM#<normTerm>`  
+  - `gsi1sk = <source>#<fundId>#DOC#<docId>#CLAUSE#<clauseId>`  
+  - **Use:** “Show all *management_fee* clauses across docs.”
+
+- **GSI2 (by investor)**  
+  - `gsi2pk = INV#<investorId>`  
+  - `gsi2sk = <fundId>#DOC#<docId>#CLAUSE#<clauseId>`  
+  - **Use:** “Get all Side Letter clauses for Investor X.”
+
+- **GSI3 (by fund)**  
+  - `gsi3pk = FUND#<fundId>`  
+  - `gsi3sk = <source>#DOC#<docId>#<sortHint>`  
+  - **Use:** “List docs/clauses for a fund (order by sort hint).”
+
+- **GSI4 (reverse LPA map)**  
+  - `gsi4pk = LPA#<lpaDocId>#CLAUSE#<lpaClauseId>`  
+  - `gsi4sk = SL#<slDocId>#CLAUSE#<slClauseId>#SCORE#<score>`  
+  - **Use:** “Which SL clauses matched LPA §6.1(b)?”
+
+- **GSI5 (MFN review queue)**  
+  - `gsi5pk = MFN#<true|false>`  
+  - `gsi5sk = <riskBucket>#<confidenceBucket>#<fundId>#<investorId>#<slDocId>#<normTerm>`  
+  - **Use:** “Pull MFN‑eligible items requiring review.”
+
+---
+
+## Typical Queries (Pseudocode)
+
+**1) Get all clauses for a doc (ordered)**
+```js
+Query({
+  TableName: "LegalDocs",
+  KeyConditionExpression: "pk = :p AND begins_with(sk, :c)",
+  ExpressionAttributeValues: { ":p": "DOC#LPA_FUND1_V1", ":c": "CLAUSE#" }
+})
+```
+
+**2) All clauses under a topic (e.g., MFN)**
+```js
+Query({
+  TableName: "LegalDocs",
+  IndexName: "gsi1-by-term",
+  KeyConditionExpression: "gsi1pk = :t",
+  ExpressionAttributeValues: { ":t": "TERM#mfn" }
+})
+```
+
+**3) All SL clauses for an investor**
+```js
+Query({
+  TableName: "LegalDocs",
+  IndexName: "gsi2-by-investor",
+  KeyConditionExpression: "gsi2pk = :i",
+  ExpressionAttributeValues: { ":i": "INV#INV100" }
+})
+```
+
+**4) Reverse lookup: which SLs matched LPA §6.1(b)?**
+```js
+Query({
+  TableName: "LegalDocs",
+  IndexName: "gsi4-reverse-lpa-map",
+  KeyConditionExpression: "gsi4pk = :k",
+  ExpressionAttributeValues: { ":k": "LPA#LPA_FUND1_V1#CLAUSE#6.1(b)" }
+})
+```
+
+**5) Build the comparison matrix for one SL**
+```js
+Query({
+  TableName: "LegalDocs",
+  KeyConditionExpression: "pk = :p",
+  ExpressionAttributeValues: { ":p": "COMPARE#SL_INV100_FUND1_V1" }
+})
+```
+
+---
+
+## Notes & Tips
+- **Streams**: enable on the table; trigger an embedder Lambda when new `CLAUSE` items arrive.
+- **Idempotency**: store a `checksum` for OCR/ETL inputs to avoid duplicates.
+- **Vector search**: keep vectors in OpenSearch (store only `osId` in DynamoDB).
+
+---
+
+*End of document.*

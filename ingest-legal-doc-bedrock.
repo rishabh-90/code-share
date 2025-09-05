@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+import fs from "fs";
+import pdfParse from "pdf-parse";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+
+// -----------------------------
+// CLI
+// -----------------------------
+const argv = yargs(hideBin(process.argv))
+  .option("pdf", { type: "string", demandOption: true })
+  .option("docId", { type: "string", demandOption: true })
+  .option("fundId", { type: "string", demandOption: true })
+  .option("source", { type: "string", choices: ["LPA", "SL"], demandOption: true })
+  .option("investorId", { type: "string" })
+  .option("table", { type: "string", default: "LegalDocs" })
+  .option("region", { type: "string", default: "us-east-1" })
+  .option("dryRun", { type: "boolean", default: false })
+  .help()
+  .argv;
+
+// -----------------------------
+// AWS clients
+// -----------------------------
+const bedrock = new BedrockRuntimeClient({ region: argv.region });
+const ddb = new DynamoDBClient({ region: argv.region });
+const docClient = DynamoDBDocumentClient.from(ddb);
+
+// -----------------------------
+// Helpers
+// -----------------------------
+async function callClaude(prompt) {
+  const input = {
+    modelId: "anthropic.claude-3-sonnet-20240229-v1:0",
+    contentType: "application/json",
+    accept: "application/json",
+    body: JSON.stringify({
+      anthropic_version: "bedrock-2023-05-31",
+      max_tokens: 1500,
+      messages: [
+        { role: "user", content: prompt }
+      ]
+    })
+  };
+  const cmd = new InvokeModelCommand(input);
+  const resp = await bedrock.send(cmd);
+  const json = JSON.parse(new TextDecoder().decode(resp.body));
+  return json.content[0].text;
+}
+
+// Prompt for clause parsing
+function parsingPrompt(text) {
+  return `
+You are a document parser. Input is a section of a Limited Partnership Agreement.
+Split it into individual clauses at the lowest logical numbering level.
+
+Return JSON array. Each object must have:
+- clauseId
+- headingPath
+- sectionNumber
+- text
+- normTerm (choose: management_fee, distribution, carried_interest, excuse_right, reporting, advisory_committee, transfer, confidentiality, mfn, indemnification, governing_law, investment_restriction, other)
+
+Do not summarize or draft. Use text verbatim.
+
+TEXT:
+"""${text}"""
+`;
+}
+
+// -----------------------------
+// Main
+// -----------------------------
+(async () => {
+  const pdfBuffer = fs.readFileSync(argv.pdf);
+  const pdfData = await pdfParse(pdfBuffer);
+
+  console.log(`PDF has ${pdfData.numpages} pages. Extracting...`);
+
+  // Simple: split per page
+  const pageTexts = pdfData.text.split("\f");
+  let items = [];
+
+  for (let i = 0; i < pageTexts.length; i++) {
+    const text = pageTexts[i].trim();
+    if (!text) continue;
+
+    console.log(`Processing page ${i + 1}/${pageTexts.length}...`);
+    try {
+      const raw = await callClaude(parsingPrompt(text));
+      const clauses = JSON.parse(raw);
+
+      clauses.forEach((c, idx) => {
+        const item = {
+          pk: `DOC#${argv.docId}`,
+          sk: `CLAUSE#${c.clauseId || `p${i + 1}-${idx}`}`,
+          entity: "CLAUSE",
+          source: argv.source,
+          fundId: argv.fundId,
+          docId: argv.docId,
+          investorId: argv.investorId || null,
+          sectionNumber: c.sectionNumber,
+          headingPath: c.headingPath,
+          page: i + 1,
+          normTerm: c.normTerm,
+          text: c.text,
+          vectorReady: false,
+          gsi1pk: `TERM#${c.normTerm}`,
+          gsi1sk: `${argv.source}#${argv.fundId}#DOC#${argv.docId}#CLAUSE#${c.clauseId}`,
+          gsi3pk: `FUND#${argv.fundId}`,
+          gsi3sk: `${argv.source}#DOC#${argv.docId}#p${i + 1}-${idx}`
+        };
+        items.push(item);
+      });
+    } catch (err) {
+      console.error("Error parsing page", i + 1, err);
+    }
+  }
+
+  console.log(`Prepared ${items.length} clause items.`);
+
+  if (argv.dryRun) {
+    console.log(JSON.stringify(items.slice(0, 3), null, 2));
+    return;
+  }
+
+  // Batch write to DynamoDB
+  const BATCH_SIZE = 25;
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const batch = items.slice(i, i + BATCH_SIZE).map(Item => ({
+      PutRequest: { Item }
+    }));
+    const cmd = new BatchWriteCommand({ RequestItems: { [argv.table]: batch } });
+    await docClient.send(cmd);
+    console.log(`Wrote batch ${i}–${i + batch.length}`);
+  }
+
+  console.log("✅ Ingest complete.");
+})();
+
+
+
+node ingest-legal-doc-bedrock.mjs \
+  --pdf ./ILPA-Model-Limited-Parnership-Agreement-Deal-By-Deal.pdf \
+  --docId LPA_FUND1_V1 \
+  --fundId FUND1 \
+  --source LPA
+
+
+
+node ingest-legal-doc-bedrock.mjs \
+  --pdf ./InvestorX-SideLetter.pdf \
+  --docId SL_INV100_FUND1_V1 \
+  --fundId FUND1 \
+  --source SL \
+  --investorId INV100

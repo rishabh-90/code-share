@@ -1,0 +1,55 @@
+{
+  "pk": "DOC#<docId>",
+  "sk": "META",
+  "entity": "DOC",
+
+  "docId": "<docId>",
+  "source": "LPA",                 // or "SL"
+  "fundId": "<fundId>",
+  "investorId": null,              // only for SLs, else null
+
+  "file": {
+    "name": "<original-file.pdf>",
+    "mime": "application/pdf",
+    "pageCount": 0,                // fill if known
+    "lang": "en"
+  },
+  "s3": {
+    "pdfUri": "s3://bucket/path/file.pdf",
+    "textUri": null,               // s3 of extracted text/Textract JSON if you keep it
+    "etag": "<s3-etag>",
+    "sizeBytes": 0,
+    "sha256": "<sha256-of-file>"   // compute once; helps idempotency
+  },
+
+  "doc": {
+    "title": null,                 // optional (parsed from cover)
+    "effectiveDate": null,         // optional
+    "version": "v1"                // optional tag you pass in
+  },
+
+  "parse": {
+    "runId": "<ISO-8601>",         // correlation id for this parse
+    "parser": "textract|pdf-parse|pymupdf",
+    "model": "anthropic.claude-3-sonnet-20240229-v1:0",  // clause splitter model used
+    "promptHash": "<sha256-of-prompt>",
+    "chunking": { "strategy": "per-page", "targetChars": 60000 },
+    "startedAt": "<ISO-8601>",
+    "finishedAt": "<ISO-8601>",
+    "errors": 0
+  },
+
+  "status": {
+    "parseComplete": true,         // set true when you finish queuing all clauses
+    "totalClauses": 0,             // increment as you write clauses
+    "embedRemaining": 0,           // increment with each clause; Embed Lambda will decrement
+    "embedStatus": "PENDING",      // PENDING -> RUNNING -> READY
+    "compareStatus": "PENDING"     // Orchestrator will flip to READY when done
+  },
+
+  "createdAt": "<ISO-8601>",
+  "createdBy": "system|user@domain.com",
+
+  "gsi3pk": "FUND#<fundId>",
+  "gsi3sk": "SOURCE#<source>#DOC#<docId>#<createdAt>"
+}

@@ -1,0 +1,477 @@
+[
+  {
+    "key": "FDK1_PSHIP_NAME",
+    "definition": "Name of the partnership entity",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PSHIP_EIN",
+    "definition": "Employer Identification Number of the partnership",
+    "type": "ein"
+  },
+  {
+    "key": "FDK1_PSHIP_ADDRESS",
+    "definition": "Mailing address of the partnership",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PSHIP_CITY",
+    "definition": "City of the partnership",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PSHIP_STATE",
+    "definition": "State of the partnership",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PSHIP_ZIP",
+    "definition": "ZIP code of the partnership",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_CURRENT_YEAR",
+    "definition": "Tax year for the K-1 form",
+    "type": "year"
+  },
+  {
+    "key": "FDK1_CALENDAR_START",
+    "definition": "Start date of the tax period",
+    "type": "date"
+  },
+  {
+    "key": "FDK1_CALENDAR_END",
+    "definition": "End date of the tax period",
+    "type": "date"
+  },
+  {
+    "key": "FDK1_PARTNER_NAME",
+    "definition": "Name of the partner receiving the K-1",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_TIN",
+    "definition": "Partner Taxpayer Identification Number (SSN/EIN)",
+    "type": "ein"
+  },
+  {
+    "key": "FDK1_PARTNER_ADDRESS",
+    "definition": "Mailing address of the partner",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_CITY",
+    "definition": "City of the partner",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_STATE",
+    "definition": "State of the partner",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_ZIP",
+    "definition": "ZIP code of the partner",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_TYPE",
+    "definition": "Partner type (individual, corporation, partnership, etc.)",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_BOX_1",
+    "definition": "Ordinary business income (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_2",
+    "definition": "Net rental real estate income (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_3",
+    "definition": "Other net rental income (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_4A",
+    "definition": "Guaranteed payments for services",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_4B",
+    "definition": "Guaranteed payments for capital",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_5",
+    "definition": "Interest income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_6A",
+    "definition": "Ordinary dividends",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_6B",
+    "definition": "Qualified dividends",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_7",
+    "definition": "Royalties",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_8",
+    "definition": "Net short-term capital gain (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_9A",
+    "definition": "Net long-term capital gain (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_10",
+    "definition": "Section 1231 gain (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_11",
+    "definition": "Other income (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_12",
+    "definition": "Section 179 deduction",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_13A",
+    "definition": "Charitable contributions",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_13B",
+    "definition": "Investment interest expense",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_13W",
+    "definition": "Other deductions",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_14A",
+    "definition": "Self-employment earnings (loss)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_14C",
+    "definition": "Gross farming or fishing income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_15A",
+    "definition": "Low-income housing credit (section 42(j)(5))",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_15B",
+    "definition": "Low-income housing credit (other)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_15C",
+    "definition": "Qualified rehabilitation expenditures (rental real estate)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_15F",
+    "definition": "Other credits",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_16A",
+    "definition": "Foreign gross income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_16B",
+    "definition": "Foreign taxes paid or accrued",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_16C",
+    "definition": "Foreign country or U.S. possession",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_BOX_17A",
+    "definition": "Alternative minimum tax adjustment",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_17C",
+    "definition": "Depreciation adjustment on property",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_18A",
+    "definition": "Tax-exempt interest income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_18B",
+    "definition": "Other tax-exempt income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_19A",
+    "definition": "Distributions (cash and marketable securities)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_19B",
+    "definition": "Distributions (other property)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_20A",
+    "definition": "Investment income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_20B",
+    "definition": "Investment expense",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_BOX_20Z",
+    "definition": "Other information (see attached statements)",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_SECTION_199A",
+    "definition": "Section 199A qualified business income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_SECTION_199A_W2",
+    "definition": "Section 199A W-2 wages",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_SECTION_199A_UBIA",
+    "definition": "Section 199A unadjusted basis of qualified property",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_CAPITAL_BEGIN",
+    "definition": "Partner capital account beginning of year",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_CAPITAL_CONTRIBUTIONS",
+    "definition": "Capital contributions during the year",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_CAPITAL_INCREASE",
+    "definition": "Current year increase (decrease)",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_CAPITAL_WITHDRAWALS",
+    "definition": "Withdrawals and distributions",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_CAPITAL_END",
+    "definition": "Partner capital account end of year",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_PROFIT_SHARE_BEGIN",
+    "definition": "Partner share of profit at beginning of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_PROFIT_SHARE_END",
+    "definition": "Partner share of profit at end of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_LOSS_SHARE_BEGIN",
+    "definition": "Partner share of loss at beginning of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_LOSS_SHARE_END",
+    "definition": "Partner share of loss at end of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_CAPITAL_SHARE_BEGIN",
+    "definition": "Partner share of capital at beginning of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_CAPITAL_SHARE_END",
+    "definition": "Partner share of capital at end of year (%)",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_RECOURSE_LIABILITY",
+    "definition": "Partner share of recourse liabilities",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_NONRECOURSE_LIABILITY",
+    "definition": "Partner share of nonrecourse liabilities",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_QUALIFIED_NONRECOURSE",
+    "definition": "Partner share of qualified nonrecourse financing",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_FOREIGN_COUNTRY",
+    "definition": "Foreign country name for foreign source income",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_FOREIGN_CODE",
+    "definition": "Foreign country code",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_STATE_SOURCE_INCOME_CA",
+    "definition": "California source income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_SOURCE_INCOME_NY",
+    "definition": "New York source income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_SOURCE_INCOME_MA",
+    "definition": "Massachusetts source income",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_WITHHOLDING_CA",
+    "definition": "California tax withheld",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_WITHHOLDING_NY",
+    "definition": "New York tax withheld",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_WITHHOLDING_MA",
+    "definition": "Massachusetts tax withheld",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_FOOTNOTES",
+    "definition": "Footnotes or statement references in appendices",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_SECTION_L_CAPITAL_METHOD",
+    "definition": "Capital account analysis method (tax/book/GAAP)",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_SECTION_L_OTHER_INCREASES",
+    "definition": "Other increases in capital account",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_SECTION_L_OTHER_DECREASES",
+    "definition": "Other decreases in capital account",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_SECTION_M2_BEGINNING",
+    "definition": "Analysis of partner's capital account at beginning of year",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_SECTION_M2_ENDING",
+    "definition": "Analysis of partner's capital account at end of year",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_AMT_ADJUSTMENT",
+    "definition": "Alternative Minimum Tax adjustment items",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_PARTNER_ENTITY_CODE",
+    "definition": "Partner entity code (type)",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_COUNTRY",
+    "definition": "Country of residence of partner",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_SECTION_754",
+    "definition": "Section 754 election indicator",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_SECTION_743B_ADJUSTMENT",
+    "definition": "Section 743(b) adjustment amount",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_STATE_ALLOCATION_RATIO",
+    "definition": "State allocation ratio for multi-state partnerships",
+    "type": "percent"
+  },
+  {
+    "key": "FDK1_TOTAL_LIABILITIES",
+    "definition": "Total partner liabilities",
+    "type": "number"
+  },
+  {
+    "key": "FDK1_OTHER_INFORMATION",
+    "definition": "Other information not captured elsewhere",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_DOC_STATUS_FINAL",
+    "definition": "Document status (draft or final)",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_K1_ACTIVITY",
+    "definition": "K-1 activity type or classification",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_RETURN_PREPARER",
+    "definition": "Return preparer name or firm",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PREPARER_PHONE",
+    "definition": "Preparer phone number",
+    "type": "string"
+  },
+  {
+    "key": "FDK1_PARTNER_COUNTRY_CODE",
+    "definition": "Partner country code",
+    "type": "string"
+  }
+]
